@@ -1,0 +1,17 @@
+# Adding all the necessary ros sourcing
+echo "" >> ~/.bashrc
+echo "## ROS" >> ~/.bashrc
+echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> ~/.bashrc
+echo "source ~/perse_ws/install/setup.bash" >> ~/.bashrc
+echo "export RCUTILS_COLORIZED_OUTPUT=1" >> ~/.bashrc
+# Adding all the necessary ros sourcing
+
+mkdir -p ~/.config/fish
+touch ~/.config/fish/config.fish
+echo "" >> ~/.config/fish/config.fish
+echo "## ROS" >> ~/.config/fish/config.fish
+echo "if type -q bass" >> ~/.config/fish/config.fish
+echo "bass source /opt/ros/$ROS_DISTRO/setup.bash" >> ~/.config/fish/config.fish
+echo "bass source ~/perse_ws/install/setup.bash" >> ~/.config/fish/config.fish
+echo "end" >> ~/.config/fish/config.fish
+echo "export RCUTILS_COLORIZED_OUTPUT=1" >> ~/.config/fish/config.fish

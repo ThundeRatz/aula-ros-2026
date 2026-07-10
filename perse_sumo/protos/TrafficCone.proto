@@ -1,0 +1,103 @@
+#VRML_SIM R2025a utf8
+# license: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
+# license url: https://cyberbotics.com/webots_assets_license
+# documentation url: https://webots.cloud/run?url=https://github.com/cyberbotics/webots/blob/released/projects/objects/traffic/protos/TrafficCone.proto
+# keywords: exterior/street furniture
+# Traffic cone with invisible physics base.
+# template language: javascript
+
+PROTO TrafficCone [
+  field SFVec3f    translation 0 0 0
+  field SFRotation rotation    0 0 1 0
+  field SFFloat    scale       1
+  field SFFloat    scaleSides  0.7
+  field SFString   name        "traffic cone"
+  field SFNode     physics     NULL             # Is `Solid.physics`.
+]
+{
+  %<
+    const scale = fields.scale.value;
+    const scaleSides = fields.scaleSides.value;
+  >%
+  Solid {
+    translation IS translation
+    rotation IS rotation
+    physics IS physics
+    recognitionColors [
+      0.94 0.54 0.11 1 1 1
+    ]
+    children [
+      Transform {
+        scale %<= scaleSides >% %<= scaleSides >% %<= scale >%
+        children [
+          Pose {
+              translation 0 0 0.26
+              children [
+                Shape {
+                  appearance PBRAppearance {
+                    baseColorMap ImageTexture {
+                      url [
+                        "textures/cone.jpg"
+                      ]
+                    }
+                    roughness 0.35
+                    metalness 0
+                  }
+                  # GEOMETRIA VISUAL: Apenas o Cone (sem base quadrada)
+                  geometry Cone {
+                    bottomRadius %<= 0.3 * scaleSides >%
+                    height 0.52
+                    bottom FALSE
+                    subdivision 24
+                  }
+                }
+              ]
+            }
+        ]
+      }
+    ]
+    name IS name
+    model "traffic cone"
+    boundingObject Group {
+      children [
+        Pose {
+          translation 0 0 %<= scale * 0.015 >%
+          rotation 1 0 0 1.5708
+          children [
+            Box {
+              size %<= scaleSides * 0.5 >% %<= scaleSides * 0.015 >% %<= scale * 0.5 >%
+            }
+          ]
+        }
+        Pose {
+          translation %<= scaleSides * -0.01 >% %<= scaleSides * -0.005 >% %<= scale * 0.22 >%
+          children [
+            Capsule {
+              height %<= scale * 0.17 >%
+              radius %<= scaleSides * 0.1 >%
+            }
+          ]
+        }
+        Pose {
+          translation %<= scaleSides * -0.01 >% %<= scaleSides * -0.005 >% %<= scale * 0.27 >%
+          children [
+            Capsule {
+              height %<= scale * 0.4 >%
+              radius %<= scaleSides * 0.04 >%
+            }
+          ]
+        }
+        Pose {
+          translation %<= scaleSides * -0.01 >% %<= scaleSides * -0.005 >% %<= scale * 0.161 >%
+          children [
+            Capsule {
+              height %<= scale * 0.0001 >%
+              radius %<= scaleSides * 0.157 >%
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+

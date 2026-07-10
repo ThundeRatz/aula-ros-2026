@@ -1,0 +1,101 @@
+#VRML_SIM R2022b utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/refs/heads/master/projects/appearances/protos/Parquetry.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/floors/protos/CircleArena.proto"
+
+IMPORTABLE EXTERNPROTO "../protos/TrafficCone.proto"
+EXTERNPROTO "../protos/Perse.proto"
+
+WorldInfo {
+  # basicTimeStep 10
+  ERP 0.6
+  # lineScale 1
+  contactProperties [
+    ContactProperties {
+      material1 "ground"
+      material2 "tire"
+      coulombFriction 80
+      rollingFriction 0.06 0.06 0.22
+      softCFM 1e-5
+    }
+    ContactProperties {
+      material1 "ground"
+      material2 "cone"
+      coulombFriction 1
+      softCFM 1e-5
+    }
+  ]
+}
+Viewpoint {
+  # position 1.1549314349734296 -1.15508170692509 18.372680220491304
+  # orientation 0.595930868482991 0.5850612247951024 -0.5500634174623528 2.151274331136835
+  position 1.2635208113702325 3.2391380721631506 0.9346196417312174
+  orientation 0.07521761657782768 0.05440309123512978 -0.9956819842803287 1.8933076931720756
+  follow "perse"
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+DEF TRAFFIC_CONE TrafficCone {
+  translation 1 1 0.2
+  rotation    0 0 1 0
+  scale       1
+  scaleSides  0.7
+  name        "traffic cone"
+  physics     Physics {
+    mass 1
+    contactMaterial "cone"
+  }
+}
+Solid {
+  translation 0 0 -0.28
+  contactMaterial "ground"
+  children [
+    DEF DOHYO_SHAPE Shape {
+      appearance Appearance {
+        texture ImageTexture {
+          url [
+            "../protos/textures/dohyo.png"
+          ]
+        }
+      }
+      geometry Cylinder {
+        height 1
+        radius 3
+        side FALSE
+      }
+    }
+  ]
+  boundingObject USE DOHYO_SHAPE
+}
+Solid {
+  contactMaterial "ground"
+
+  children [
+    DEF GROUND_SHAPE Shape {
+      appearance PBRAppearance {
+        baseColor 0.3 0.3 0.3
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 10 10 0.1
+      }
+    }
+  ]
+  boundingObject USE GROUND_SHAPE
+}
+
+DEF PATH_GROUP Group {
+}
+DEF PERSE Perse {
+  translation_offset   0.1285 0.1285 0.2
+  centerOfMass         0.1285 0 -0.1
+  maxVelocity 5
+  car_mass 10
+  # engineMaxTorque 0.01
+  # engineMaxPower 0.01
+}

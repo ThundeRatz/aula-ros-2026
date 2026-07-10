@@ -1,0 +1,102 @@
+services:
+  perse:
+    image: thunderatz/perse:latest
+    container_name: aula_ros
+    build:
+      context: .
+      dockerfile: Dockerfile
+      ssh:
+        - default
+      args:
+        - RENDER_GROUP_ID=111
+        - USER_GID=1000
+        - ROS_IMAGE=osrf/ros:humble-desktop-full
+
+    # Share same connection with the host
+    network_mode: host
+
+    # Share ipc and pid namespaces
+    ipc: host
+    pid: host
+
+    # OAK-D setup
+    security_opt:
+      - seccomp:unconfined
+      - apparmor:unconfined
+    device_cgroup_rules:
+      - 'c 189:* rmw'
+
+    tty: true
+
+    # Give higher permissions to host's machine
+    privileged: true
+
+    # Choose which user will be used inside the container
+    user: thor
+
+    group_add:
+      - "1000"
+      - "4"
+      - "20"
+      - "24"
+      - "27"
+      - "29"
+      - "30"
+      - "44"
+      - "46"
+      - "108"
+      - "118"
+      - "124"
+      - "127"
+      - "130"
+      - "998"
+      - "999"
+
+    # This command keeps the container running even when there are no other processes running
+    command: ["tail", "-f", "/dev/null"]
+
+    environment:
+      - DISPLAY=${DISPLAY}
+      - NVIDIA_VISIBLE_DEVICES=all
+      - "QT_X11_NO_MITSHM=1"
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - OMP_WAIT_POLICY=passive
+
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ${HOME}/.Xauthority:/home/thor/.Xauthority
+      - ${HOME}/.ssh:/home/thor/.ssh:ro
+      - /dev:/dev:z
+      - /sys:/sys:z
+
+      - ./:/home/thor/perse_ws/src
+      # - ./build:/home/thor/perse_ws/build
+      # - ./install:/home/thor/perse_ws/install
+
+    # Since we are using the volume `/dev:/dev/:z`, there is no need to explicitly share any devices
+    #
+    # Here you define which devices to share with the container
+    # Typically this is used to enable the use of the video card and external devices such as cameras
+    # Device names may vary on the system
+    devices:
+      # Camera
+      # - /dev/video0
+      # VESC USB port
+      # - /dev/ttyACM0
+      # AMD video card
+      - /dev/dri
+      # video cards when using Docker Desktop
+      # - /dev/dxg
+
+
+    # # Use Nvidia Container Toolkit runtime. It improves interaction between the container and nvidia drivers
+    # runtime: nvidia
+    # # Enable nvidia video card
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    #

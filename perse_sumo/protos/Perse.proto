@@ -1,0 +1,374 @@
+#VRML_SIM R2025a utf8
+# template language: javascript
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/released/projects/devices/slamtec/protos/RpLidarA2.proto"
+EXTERNPROTO "./PerseWheel.proto"
+EXTERNPROTO "./vehicle/Car.proto"
+
+PROTO Perse [
+  # --- Configuração de Posição ---
+  field SFVec3f    translation_offset   0.1285 0.1285 0   # Offset de translação inicial do robô
+  field SFRotation rotation_offset      0 0 1 0           # Rotação inicial do robô
+
+  # --- Configuração Geral do Carro ---
+  field SFString   name                 "perse"           # Nome do nó Car
+  field SFString   controller           "<extern>"        # Controlador do carro
+  field SFBool     supervisor           TRUE              # Se o nó é um supervisor
+  field SFString   model                "car"             # Modelo do carro
+
+  # --- Configuração de Desempenho do Carro ---
+  field SFFloat    maxVelocity          10                # Velocidade máxima do carro (m/s)
+  field SFFloat    engineMaxTorque      50                # Torque máximo do motor (N.m)
+  field SFFloat    engineMaxPower       500                # Potência máximo do motor (N.m)
+  field SFFloat    maxSteeringAngle     0.472               # Ângulo máximo de esterçamento (rad)
+  field SFFloat    minSteeringAngle    -0.472               # Ângulo mínimo de esterçamento (rad)
+  field SFString   tireMaterial         "tire"        # Material das rodas
+
+  # --- Configuração Física ---
+  field SFFloat    car_mass             5                 # Massa total do carro (kg)
+  field SFVec3f    centerOfMass         0.11804 -0.00908 -0.00349 # Centro de massa (x, y, z)
+  # Nota: A matriz de inércia é complexa e talvez não seja ideal para um campo simples, mantida no corpo.
+
+  # --- Configuração das Rodas (Parâmetros comuns) ---
+  field SFFloat    wheel_mass           0.1               # Massa de cada roda (kg)
+  field SFFloat    tireRadius           0.071429          # Raio do pneu (m)
+  field SFFloat    thickness            0.053572          # Espessura da roda/pneu (m)
+]
+{
+  %<
+    const centerOfMass = fields.centerOfMass.value;
+  >%
+  Car {
+    translation IS translation_offset
+    rotation    IS rotation_offset
+    #translation                    0 0 0
+    #rotation                       0 0 1 0
+    name                           IS name
+    model                          IS model
+    controller                     IS controller
+    controllerArgs                 []
+    supervisor                     IS supervisor
+    synchronization                TRUE
+    trackFront                     0.257
+    trackRear                      0.257
+    wheelbase                      0.257
+    minSteeringAngle               IS minSteeringAngle
+    maxSteeringAngle               IS maxSteeringAngle
+    suspensionFrontSpringConstant  10000
+    suspensionFrontDampingConstant 5000
+    suspensionRearSpringConstant   10000
+    suspensionRearDampingConstant  5000
+    wheelsDampingConstant          0
+    maxSteeringTorque              100
+    extensionSlot                  [
+      Solid {
+        boundingObject Transform {
+          translation 0.128 0 0.15
+          children Box {
+            size 0.4 0.21 0.075
+          }
+        }
+      }
+      Gyro {
+        name "gyro"
+      }
+      Accelerometer {
+        name "accelerometer"
+      }
+      InertialUnit {
+        name "inertial unit"
+      }
+      TouchSensor {
+        type "bumper"
+        name "bumper"
+        translation 0.38 0 0.09
+        physics Physics {}
+        children [
+          Transform {
+            scale 0.001 0.001 0.001
+            rotation 0 0 1 -1.5707
+            children [
+              Pose {
+                translation -175.46 -102 13.9
+                rotation 1 0 0 -1.5707
+                children [
+                  Shape {
+                    appearance PBRAppearance {
+                      baseColor 0.7 0.7 0.7
+                        roughness 1
+                        metalness 0
+                    }
+                    geometry Mesh {
+                      url "../meshes/bumper.stl"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+        boundingObject Group {
+            children [
+              Pose {
+                translation -0.01 0 0
+                children [
+                  Shape {
+                    geometry Box {
+                      size 0.02 0.35 0.15
+                    }
+                  }
+                ]
+              }
+              Pose {
+                translation 0.01 0.175 0
+                children [
+                  Shape {
+                    geometry Box {
+                      size 0.05 0.02 0.15
+                    }
+                  }
+                ]
+              }
+              Pose {
+                translation 0.01 -0.175 0
+                children [
+                  Shape {
+                    geometry Box {
+                      size 0.05 0.02 0.15
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+      }
+      Solid {
+        translation 0.305 -0.003 0.0086
+        rotation 0 1 0 -0.5224
+        name "inductive_sensor"
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.96 0.66 0.258
+              roughness 1
+              metalness 0
+            }
+            geometry Cylinder {
+              height 0.06
+              radius 0.0075
+            }
+          }
+          Transform {
+            rotation 0 1 0 1.57
+            children [
+              DEF LINE_SENSOR DistanceSensor {
+                name "line_sensor"
+                lookupTable              [ 0 0 0, 0.3 1000 0 ] # lookup table
+                type                     "infra-red"             # {"generic", "infra-red", "sonar", "laser"}
+                numberOfRays             1                     # [1, inf)
+                aperture                 1.5708                # [0, 2*pi]
+                gaussianWidth            1                     # [0, inf)
+                resolution               -1                    # {-1, [0, inf)}
+                redColorSensitivity      1                     # [0, inf)
+              }
+            ]
+            }
+        ]
+      }
+      RpLidarA2 {
+        translation 0.077 0 0.21
+      }
+      Solid {
+        translation -0.08 0.13 -0.02
+        name "locomocao"
+        children [
+          Transform {
+            scale 0.001 0.001 0.001
+            rotation 1 0 0 1.5707
+            children [
+              Shape {
+                castShadows FALSE
+                appearance PBRAppearance {
+                  baseColor 0.3 0.3 0.3
+                  roughness 1
+                  metalness 0
+                }
+                geometry Mesh {
+                  url "../meshes/locomocao.stl"
+                }
+              }
+            ]
+          }
+        ]
+      }
+      Solid {
+        translation -0.08 0.11 0.09
+        name "tampa"
+        children [
+          Transform {
+            scale 0.001 0.001 0.001
+            rotation 1 0 0 1.5707
+            children [
+              Shape {
+                castShadows FALSE
+                  appearance PBRAppearance {
+                    baseColor 0.1 0.1 0.1
+                      roughness 1
+                      metalness 0
+                  }
+                geometry Mesh {
+                  url "../meshes/tampa.stl"
+                }
+              }
+            ]
+          }
+        ]
+      }
+      LED {
+        name "led"
+        gradual FALSE
+        translation -0.075 0 0.19
+        children [
+          Transform {
+            scale 0.09 0.09 0.09
+            translation -0.005 0.11 -0.09
+            children [
+              Shape {
+                castShadows FALSE
+                appearance PBRAppearance {
+                  baseColor 0.8 0.8 0.8
+                    roughness 0.2
+                    metalness 0.5
+                    emissiveIntensity 200
+                }
+                geometry Mesh {
+                  url "../meshes/led.stl"
+                }
+              }
+            ]
+          }
+        ]
+      }
+      Camera {
+        translation 0.31 0 0.18
+        width 300
+        height 300
+        recognition Recognition {}
+        children [
+          Transform {
+            scale 0.001 0.001 0.001
+            rotation 1 0 0 1.5707
+            translation -0.3 0.045 -0.09
+            children [
+              Shape {
+                castShadows FALSE
+                appearance PBRAppearance {
+                  baseColor 0.2 0.2 0.2
+                  roughness 1
+                  metalness 0
+                }
+                geometry Mesh {
+                  url "../meshes/camera.stl"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+    boundingObject                 NULL
+    radarCrossSection              6.756757
+    recognitionColors              []
+    type                           "propulsion"
+    engineType                     "electric"
+    engineSound                    "../vehicle/sounds/engine.wav"
+    engineSoundRpmReference        1000
+    # brakeCoefficient               0.5
+    time0To100                     2
+    maxVelocity                    IS maxVelocity
+    engineMaxTorque                IS engineMaxTorque
+    engineMaxPower                 IS engineMaxPower
+    engineMaxRPM                   450
+    engineMinRPM                   0
+    engineFunctionCoefficients     150 0.1 0
+    gearRatio                      [-1 1]
+    hybridPowerSplitRatio          0.25
+    hybridPowerSplitRPM            3000
+    window                         "<generic>"
+    physics Physics {
+      mass IS car_mass
+      inertiaMatrix [
+        0.060921,   # Ixx em kg*m^2
+        0.111164,   # Iyy em kg*m^2
+        0.103591    # Izz em kg*m^2
+        -0.002364,  # Ixy em kg*m^2
+        0.000154,   # Ixz em kg*m^2
+        -0.001326,  # Iyz em kg*m^2
+      ]
+      centerOfMass [
+        %<= centerOfMass.x >% %<= centerOfMass.y >% %<= centerOfMass.z >%
+      ]
+    }
+    wheelFrontRight PerseWheel {
+      name "front right wheel"
+      thickness          IS thickness
+      tireRadius         IS tireRadius
+      curvatureFactor    0.0625
+      rimRadius          0.05
+      rimBeamWidth       0.017857
+      centralInnerRadius 0.016071
+      centralOuterRadius 0.023214
+      rimBeamThickness   0.035715
+      rimBeamOffset      0.005357
+      contactMaterial IS tireMaterial
+      physics DEF WHEEL_PHYSICS Physics {
+        density -1
+        mass IS wheel_mass
+      }
+    }
+    wheelFrontLeft PerseWheel {
+      name "front left wheel"
+      wheelSide TRUE
+      thickness          IS thickness
+      tireRadius         IS tireRadius
+      curvatureFactor    0.0625
+      rimRadius          0.05
+      rimBeamWidth       0.017857
+      centralInnerRadius 0.016071
+      centralOuterRadius 0.023214
+      rimBeamThickness   0.035715
+      rimBeamOffset      0.005357
+      contactMaterial IS tireMaterial
+      physics USE WHEEL_PHYSICS
+    }
+    wheelRearRight PerseWheel {
+      name "rear right wheel" 
+      thickness          IS thickness
+      tireRadius         IS tireRadius
+      curvatureFactor    0.0625
+      rimRadius          0.05
+      rimBeamWidth       0.017857
+      centralInnerRadius 0.016071
+      centralOuterRadius 0.023214
+      rimBeamThickness   0.035715
+      rimBeamOffset      0.005357
+      contactMaterial IS tireMaterial
+      physics USE WHEEL_PHYSICS
+    }
+    wheelRearLeft PerseWheel {
+      name "rear left wheel"
+      wheelSide TRUE
+      thickness          IS thickness
+      tireRadius         IS tireRadius
+      curvatureFactor    0.0625
+      rimRadius          0.05
+      rimBeamWidth       0.017857
+      centralInnerRadius 0.016071
+      centralOuterRadius 0.023214
+      rimBeamThickness   0.035715
+      rimBeamOffset      0.005357
+      contactMaterial IS tireMaterial
+      physics USE WHEEL_PHYSICS
+    }
+  }
+}
