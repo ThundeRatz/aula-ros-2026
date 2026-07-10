@@ -19,6 +19,8 @@
  * Private Constants
  *****************************************/
 
+ #define MSG_BUFFER 10
+
 double lidar_angle = 0;
 double lidar_distance = 0;
 bool failsafe = false;
@@ -28,7 +30,9 @@ double line_sensor = std::numeric_limits<double>::max();
 /*************
  * Callbacks *
  *************/
-void line_sensor_callback(sensor_msgs::msg::Range msg); // Precisa ser implementado
+void line_sensor_callback(sensor_msgs::msg::Range msg){
+  line_sensor = msg.range;
+}
 
 void lidar_callback(sensor_msgs::msg::LaserScan msg) {
   double angle_delta = (msg.angle_max - msg.angle_min) / msg.ranges.size();
@@ -66,28 +70,55 @@ void lidar_callback(sensor_msgs::msg::LaserScan msg) {
 int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
   rclcpp::Node::SharedPtr ros_node = rclcpp::Node::make_shared("perse_brain");
+
+  auto failsafe_sub = ros_node->create_subscription<std_msgs::msg::Bool>(
+      "/perse/sensors/failsafe", 1, &failsafe_callback);
+  auto line_sensor_sub = ros_node->create_subscription<sensor_msgs::msg::Range>(
+      "/perse/sensors/line_sensor", 1, &line_sensor_callback);
+  auto lidar_sub = ros_node->create_subscription<sensor_msgs::msg::LaserScan>(
+      "/perse/sensors/lidar", 1, &lidar_callback);
+  auto cmd_vel_pub = ros_node->create_publisher<geometry_msgs::msg::Twist>(
+      "/perse/actuator/cmd_vel", 1);
+
+  geometry_msgs::msg::Twist twist_msg;
+
+  // Declare parameters
+  ros_node->declare_parameter("kp", rclcpp::PARAMETER_DOUBLE);
+  ros_node->declare_parameter("line_sensor_threshold",
+                              rclcpp::PARAMETER_DOUBLE);
+  ros_node->declare_parameter("lidar_distance_threshold",
+                              rclcpp::PARAMETER_DOUBLE);
+  ros_node->declare_parameter("max_velocity", rclcpp::PARAMETER_DOUBLE);
+
+  // get parameters
+  double kp = ros_node->get_parameter("kp").as_double();
+  double line_sensor_threshold =
+      ros_node->get_parameter("line_sensor_threshold").as_double();
+  double lidar_distance_threshold =
+      ros_node->get_parameter("lidar_distance_threshold").as_double();
+  double max_velocity = ros_node->get_parameter("max_velocity").as_double();
+
   rclcpp::Rate loop_rate(100);
-
-  /**********************************
-   * Implemente os subscribers aqui *
-   **********************************/
-  // auto nome_sub = ros_node->create_subscription<tipo>("tópico", 1, &callback)
-
-  /******************************
-   * Declare os parâmetros aqui *
-   ******************************/
-  // ros_node->declare_parameter("nome_do_parametro", rclcpp::TIPO_DO_PARAMETRO);
-  
-  /******************************
-   * Obtenha os parâmetros aqui *
-   ******************************/
-  // auto parametro = ros_node->get_parameter("nome_do_parametro").as_tipo();
   
   while (rclcpp::ok()) {
-    /**************************************
-     * Implemente a lógica principal aqui *
-     **************************************/
+     double angle_err = kp * (0 - lidar_angle);
 
+    std::cout << "angle: " << lidar_angle << "; distance: " << lidar_distance
+              << std::endl;
+
+    twist_msg.angular.z = -angle_err;
+    twist_msg.linear.x = max_velocity / 2;
+
+    if (lidar_distance < lidar_distance_threshold) {
+      twist_msg.angular.z = 0;
+      twist_msg.linear.x = max_velocity;
+    }
+
+    if (line_sensor < line_sensor_threshold) {
+      twist_msg.linear.x = 0;
+    }
+
+    cmd_vel_pub->publish(twist_msg);
     rclcpp::spin_some(ros_node);
     loop_rate.sleep();
   }

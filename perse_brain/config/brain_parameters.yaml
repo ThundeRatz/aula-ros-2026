@@ -1,3 +1,6 @@
 perse_brain:
   ros__parameters:
-    # Declare os parâmetros aqui
+    kp: 1.0
+    line_sensor_threshold: 0.2
+    lidar_distance_threshold: 0.7
+    max_velocity: 0.6

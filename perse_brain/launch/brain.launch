@@ -1,3 +1,7 @@
 <launch>
-    <!-- Preencha o launchfile para executar o binário brain do pacote perse_brain -->
+    <arg name="brain_parameters" default="$(find-pkg-share perse_brain)/config/brain_parameters.yaml"/>
+
+    <node pkg="perse_brain" exec="brain" name="perse_brain" output="screen">
+        <param from="$(var brain_parameters)"/>
+    </node>
 </launch>
